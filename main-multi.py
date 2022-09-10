@@ -32,6 +32,7 @@ manY = 0.0000000000003405
 
 def mandelbrotProcess(threadNum, processStartHeight, processIntervalHeight, processEndHeight, size, manX, manY, mandelbrotRAM):
     # mandelbrot = mandelbrotRAM.get()
+    # time.sleep(threadNum*0.1)
     mandelbrot = np.zeros((processIntervalHeight, processWidth, 3), np.uint8)
     for i in range(processWidth): # x（実部）方向のループ
         x = i * size / processWidth - size / 2 # 定数Cの実部]
@@ -51,12 +52,15 @@ def mandelbrotProcess(threadNum, processStartHeight, processIntervalHeight, proc
                     mandelbrot[processStartHeight-j, i] = [k*5,0,0] # (i,j)の位置のピクセルを「マンデルブロ集合でない色」で塗りつぶして
                     break # 次の点の計算へ
         mandelbrotRAM[threadNum] = np.flipud(mandelbrot)
-        if (threadNum == cpuThread-1) & (i % 2 == 0):
-            showMandelbrot = cv2.resize(np.concatenate(mandelbrotRAM.values()), (displayWidth, displayHeight))
-            cv2.imshow("Loading Now...", np.flipud(showMandelbrot))
-            cv2.waitKey(1)
 
     # mandelbrotRAM[threadNum] = mandelbrot
+
+def processProgress(mandelbrotRAM):
+    while(1):
+        showMandelbrot = cv2.resize(np.concatenate(mandelbrotRAM.values()), (displayWidth, displayHeight))
+        cv2.imshow("Loading Now...", np.flipud(showMandelbrot))
+        cv2.waitKey(1)
+        time.sleep(0.2)
  
 # main()
 # cv2.imwrite('mandelbrot5.jpg', np.flipud(mandelbrot))# マンデルブロ集合画像の保存
@@ -70,21 +74,25 @@ if __name__ == '__main__':
     def main(size, manX, manY):
         processIntervalHeight = processHeight/cpuThread
         mandelbrotRAM = Manager().dict()
+        pros = {}
         for threadNum in range(cpuThread):
             # サブプロセスを作成します
             print(processIntervalHeight*threadNum)
             print(processIntervalHeight*(threadNum+1)-1)
-            p = Process(target=mandelbrotProcess, args=(threadNum, int(processIntervalHeight*threadNum),int(processIntervalHeight),int(processIntervalHeight*(threadNum+1)+1), size, manX, manY, mandelbrotRAM))
+            pros[threadNum] = Process(target=mandelbrotProcess, args=(threadNum, int(processIntervalHeight*threadNum),int(processIntervalHeight),int(processIntervalHeight*(threadNum+1)+1), size, manX, manY, mandelbrotRAM))
             # 開始します
-            p.start()
+            pros[threadNum].start()
             print("Process started.")
-            time.sleep(0.05)
+            time.sleep(0.1)
+        pP = Process(target=processProgress, args=(mandelbrotRAM,))
+        pP.start()
         # サブプロセス終了まで待ちます
-        p.join()
-        print("Process joined.")
+        for threadNum in pros:
+            print(threadNum)
+            pros[threadNum].join()
+        pP.terminate()
+        print("DONE.")
         return mandelbrotRAM
-
-    
 
 
     mandelbrotRAM = main(size, manX, manY)
