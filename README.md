@@ -4,7 +4,7 @@
 `+` `-` zoom in zoom out<br>
 `mouse right click` specifying the center of the range to render
 ## Result example
-Control panel GUI
+Control panel GUI<br>
 ![image](https://user-images.githubusercontent.com/83022348/203571931-b6749b16-5615-45c0-b89e-a0be0c887fad.png)<br>
 
 Right click to load after zooming(multithread)<br>
